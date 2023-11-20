@@ -1,0 +1,11 @@
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\bin\Debug\Prong.exe.config
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\bin\Debug\Prong.exe
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\bin\Debug\Prong.pdb
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\bin\Debug\OpenTK.dll
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\bin\Debug\OpenTK.pdb
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\bin\Debug\OpenTK.xml
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\obj\Debug\Prong.csproj.AssemblyReference.cache
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\obj\Debug\Prong.csproj.CoreCompileInputs.cache
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\obj\Debug\Prong.csproj.CopyComplete
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\obj\Debug\Prong.exe
+C:\Gazsi\Prog\C#\Pong-v1_v2\Pong-v2\Prong\obj\Debug\Prong.pdb
