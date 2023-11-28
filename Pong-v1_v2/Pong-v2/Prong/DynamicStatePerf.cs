@@ -8,11 +8,18 @@ namespace Prong
 {
     class DynamicStatePerf
     {
-        private DynamicState state;
+        private PlayerAIAStar.Node state;
         
         public DynamicStatePerf()
         {
-            state = new DynamicState();
+            state = new PlayerAIAStar.Node()
+            {
+                parent = new PlayerAIAStar.Node(),
+                state = new DynamicState(),
+                action = PlayerAction.NONE,
+                Cost = 0,
+                Heuristic = 0
+            };
         }
 
         public void Run()

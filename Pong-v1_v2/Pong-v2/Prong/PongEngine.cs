@@ -137,7 +137,7 @@ namespace Prong
             {
                 if (ballHitsRightPaddle())
                 {
-                    bounceBall(plr2PaddleBallBounceVelocityY(), -1);
+                    bounceBall(plr2PaddleBallBounceVelocityY(), -1f);
                 }
                 if (ballPastPlayer2Edge())
                 {
@@ -150,7 +150,7 @@ namespace Prong
             {
                 if (ballHitsLeftPaddle())
                 {
-                    bounceBall(plr1PaddleBallBounceVelocityY(), 1);
+                    bounceBall(plr1PaddleBallBounceVelocityY(), 1f);
                 }
                 if (ballPastPlayer1Edge())
                 {

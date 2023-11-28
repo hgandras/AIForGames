@@ -6,67 +6,68 @@ using System.Threading.Tasks;
 
 namespace Prong
 {
-    internal class PriorityQueue<T>
+
+    /// <summary>
+    /// Priority queue implementation by https://visualstudiomagazine.com/articles/2012/11/01/priority-queues-with-c.aspx
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    internal class PriorityQueue<T> where T : IComparable<T>
     {
-        private List<Item> queue= new List<Item>();
-        public int Size { get {  return queue.Count; } }
+        private List<T> data;
+        public int Size { get { return data.Count; } }
 
-        public class Item : IComparable<Item>
+        public PriorityQueue()
         {
-            public T item { get; set; }
-            public float priority { get; set; }
-
-            public int CompareTo(Item other)
-            {
-                if (other.priority > this.priority)
-                    return 1;
-                else if (other.priority == this.priority)
-                    return 0;
-                return -1;
-            }
+            data=new List<T>();
         }
 
         /// <summary>
-        /// Inserts the elements based on the priority. It inserts one element, and than sorts the list, based on priority.
+        /// 
         /// </summary>
         /// <param name="item"></param>
-        /// <param name="priority"></param>
-        public void Enqueue(T item, float priority)
+        public void Enqueue(T item)
         {
-            Item element = new Item() { item=item, priority=priority };
-            queue.Add(element);
-            queue.Sort(); 
+            data.Add(item);
+            int ci = data.Count - 1;
+            while (ci > 0)
+            {
+                int pi = (ci - 1) / 2;
+                if (data[ci].CompareTo(data[pi]) >= 0)
+                    break;
+                T tmp = data[ci]; data[ci] = data[pi]; data[pi] = tmp;
+                ci = pi;
+            }
         }
-
+        
         /// <summary>
-        /// Pops the first element from the list.
-        /// </summary>
-        /// <returns>The first item on the list, which has the highest priority.</returns>
-        public T Pop()
-        {
-            T item = Peek();
-            queue.RemoveAt(0);
-            return item;
-        }
-
-        /// <summary>
-        /// Returns the first element from the list.
+        /// 
         /// </summary>
         /// <returns></returns>
-        public T Peek()
+        public T Dequeue()
         {
-            if(Empty())
-                throw new InvalidOperationException("Queue is emty!");
-            return queue[0].item;
+            // Assumes pq isn't empty
+            int li = data.Count - 1;
+            T frontItem = data[0];
+            data[0] = data[li];
+            data.RemoveAt(li);
+
+            --li;
+            int pi = 0;
+            while (true)
+            {
+                int ci = pi * 2 + 1;
+                if (ci > li) break;
+                int rc = ci + 1;
+                if (rc <= li && data[rc].CompareTo(data[ci]) < 0)
+                    ci = rc;
+                if (data[pi].CompareTo(data[ci]) <= 0) break;
+                T tmp = data[pi]; data[pi] = data[ci]; data[ci] = tmp;
+                pi = ci;
+            }
+            return frontItem;
         }
 
-        /// <summary>
-        /// Returns if the list is empty.
-        /// </summary>
-        /// <returns></returns>
-        public bool Empty()
-        { 
-            return queue.Count == 0; 
-        }
+
+
     }
 }

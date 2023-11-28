@@ -11,11 +11,11 @@ namespace Prong
         private DynamicState state;
         private PongEngine engine;
 
-        private Player player1 = new PlayerHuman(Key.W, Key.S);
+        //private Player player1 = new PlayerHuman(Key.W, Key.S);
         //private Player player2 = new PlayerHuman(Key.Up, Key.Down);
         //private Player player2 = new PlayerAIRandom();
-        //private Player player2 = new PlayerAIReactive();
-        private Player player2 = new PlayerAIAStar();
+        private Player player2 = new PlayerAIReactive();
+        private Player player1 = new PlayerAIAStar();
 
         protected override void OnLoad(EventArgs e)
         {

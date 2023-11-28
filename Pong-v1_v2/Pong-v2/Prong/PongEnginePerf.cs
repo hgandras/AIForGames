@@ -11,6 +11,8 @@ namespace Prong
         private StaticState config;
         private DynamicState state;
         private PongEngine engine;
+        private Player player2 = new PlayerAIReactive();
+        private Player player1 = new PlayerAIAStar();
 
         public PongEnginePerf()
         {
@@ -25,7 +27,9 @@ namespace Prong
 
         public void Run()
         {
-            engine.Tick(state, PlayerAction.NONE, PlayerAction.NONE, 0.05f);
+            PlayerAction plr1 = player1.GetAction(config, state);
+            PlayerAction plr2 = player2.GetAction(config, state);
+            engine.Tick(state, plr1, plr2, 0.05f);
         }
 
         public void Perf(long iterations)

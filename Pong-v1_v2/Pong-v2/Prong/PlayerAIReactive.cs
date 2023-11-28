@@ -11,12 +11,14 @@ namespace Prong
     {
         public PlayerAction GetAction(StaticState config, DynamicState state)
         {
-            if (state.ballY > state.plr2PaddleY)
+            if ( state.ballY >= state.plr2PaddleY+config.paddleHeight() / 4.0f )
             {
                 return PlayerAction.UP;
             }
-            else
+            else if( state.plr2PaddleY - config.paddleHeight() / 4.0f>=state.ballY)
                 return PlayerAction.DOWN;
+            else
+                return PlayerAction.NONE;
         }
     }
 }
