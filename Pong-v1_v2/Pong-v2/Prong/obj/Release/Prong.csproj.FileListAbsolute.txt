@@ -1,0 +1,11 @@
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\bin\Release\Prong.exe.config
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\bin\Release\Prong.exe
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\bin\Release\Prong.pdb
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\bin\Release\OpenTK.dll
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\bin\Release\OpenTK.pdb
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\bin\Release\OpenTK.xml
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\obj\Release\Prong.csproj.AssemblyReference.cache
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\obj\Release\Prong.csproj.CoreCompileInputs.cache
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\obj\Release\Prong.csproj.CopyComplete
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\obj\Release\Prong.exe
+C:\Gazsi\Prog\2023-2024\AIForGames\Pong-v1_v2\Pong-v2\Prong\obj\Release\Prong.pdb

@@ -3,6 +3,7 @@ using OpenTK.Audio.OpenAL;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Diagnostics;
 using System.Linq;
 using System.Timers;
 
@@ -13,12 +14,15 @@ namespace Prong
 {
     internal class PlayerAIAStar : Player
     {
-        private const float TimeOut = 0.05f;
+        private const float TIMEOUT = 50f; //Thinking time in milliseconds
+        private const int STATE_TOLERANCE = 5; //Tolarence for the different states, and is an integer to hash states.
+
         private  float timeDelta = 0.016f;
-        private bool timeOut=false;
         private Node root;
         private float predictedBallY;
         private StaticState config;
+        private Player otherPlayer=new PlayerAIReactive();
+        private Stopwatch stopwatch=new Stopwatch();
         PongEngine forwardModel;
 
         /// <summary>
@@ -38,7 +42,6 @@ namespace Prong
                 } 
             }
 
-
             public Node Clone()
             {
                 Node clonedNode = new Node()
@@ -52,27 +55,58 @@ namespace Prong
                 return clonedNode;
             }
 
-
+            /// <summary>
+            /// For the states to be equal, we need to check the dynamic states. 
+            /// </summary>
+            /// <param name="obj"></param>
+            /// <returns></returns>
             public override bool Equals(object obj)
             {
                 if (!(obj is Node)) return false;
                 Node other = (Node)obj;
 
-                return (int)other.state.plr1PaddleY==(int)state.plr1PaddleY;
+                bool paddlePos1Equals = applyTolerance(state.plr1PaddleY) == applyTolerance(other.state.plr1PaddleY);
+                bool paddlePos2Equals = applyTolerance(state.plr2PaddleY) == applyTolerance(other.state.plr2PaddleY);
+                bool ballXEquals = applyTolerance(state.ballX) == applyTolerance(other.state.ballX);
+                bool ballYEquals = applyTolerance(state.ballY) == applyTolerance(other.state.ballY);
+
+                return paddlePos1Equals && paddlePos2Equals && ballXEquals && ballYEquals;
+            }
+
+            private int applyTolerance(float value)
+            {
+                return (int)Math.Round(value / STATE_TOLERANCE) * STATE_TOLERANCE;
+            }
+
+            private static void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+            {
+                Console.WriteLine("The Elapsed event was raised at {0}", e.SignalTime);
             }
 
             /// <summary>
-            /// Idea is that states only differ by the position of the paddle, so
-            /// that should be encoded.
+            /// Encoding the information about the states.
             /// </summary>
             /// <returns></returns>
             public override int GetHashCode()
             {
+                int plr1PaddleY=applyTolerance(state.plr1PaddleY);
+                int plr2PaddleY = applyTolerance(state.plr2PaddleY);
+                int ballX=applyTolerance(state.ballX);
+                int ballY=applyTolerance(state.ballY);
+
                 int hash = 13;
-                hash = hash * 91 + (int)state.plr1PaddleY;
+                hash = hash * 23 + plr1PaddleY;
+                hash = hash * 23 + plr2PaddleY;
+                hash = hash * 23 + ballX;
+                hash = hash * 23 + ballY;
                 return hash;
             }
 
+            /// <summary>
+            /// Comprator, so the priority queue works with this.
+            /// </summary>
+            /// <param name="other"></param>
+            /// <returns></returns>
             int IComparable<Node>.CompareTo(Node other)
             {
                 if (other.F < F)
@@ -99,14 +133,10 @@ namespace Prong
             forwardModel.SetState(root.state);
             Node finalNode;
             PlayerAction action;
-            if (forwardModel.ballFlyingRight())
-                return PlayerAction.NONE;
-            else
-            {
-                predictedBallY = getBallPositionOnHit(config, state);
-                finalNode = AStarSearch();
-                action = returnAction(finalNode);
-            }
+            
+            predictedBallY = getBallPositionOnHit(config, state);
+            finalNode = AStarSearch();
+            action = returnAction(finalNode);
             return action;
         }
 
@@ -119,24 +149,24 @@ namespace Prong
         /// <returns></returns>
         private Node AStarSearch()
         {
-            Timer timer = new Timer();
-            timer.Start();
+            stopwatch.Reset();
+            stopwatch.Start();
             Dictionary<Node,float> visitedCosts=new Dictionary<Node, float>();
             PriorityQueue<Node> frontier = new PriorityQueue<Node>();
             frontier.Enqueue(root);
             int x = 0;
             while(frontier.Size>0) 
             {
-
                 Node current_node = frontier.Dequeue();
                 if (goalTest(current_node))
                     return current_node;
+                PlayerAction otherPlayerAction = otherPlayer.GetAction(config, current_node.state);
                 foreach(PlayerAction action in Enum.GetValues(typeof(PlayerAction)))
                 {
                     Node nextState=current_node.Clone();
                     nextState.parent = current_node;
                     nextState.action = action;
-                    TickResult res = forwardModel.Tick(nextState.state, action, PlayerAction.NONE, timeDelta);
+                    TickResult res = forwardModel.Tick(nextState.state, action, otherPlayerAction, timeDelta);
                     nextState.Cost = pathCost(nextState);
                     nextState.Heuristic = heuristic(nextState);
                     if (visitedCosts.ContainsKey(nextState))
@@ -144,6 +174,10 @@ namespace Prong
                             continue;
                     visitedCosts[nextState]=nextState.F;
                     frontier.Enqueue(nextState);
+                }
+                if(stopwatch.Elapsed.Milliseconds >TIMEOUT)
+                {
+                    return frontier.Dequeue();
                 }
                 x++;
             }
@@ -186,14 +220,12 @@ namespace Prong
                     return -Math.Sign(ballYVelocity) * leftoverY - borderYCoord;
                 else
                     return -Math.Sign(ballYVelocity) * leftoverY + borderYCoord;
-            }
+            }   
             if (ballYVelocity < 0)
                 return Math.Sign(ballYVelocity) * leftoverY + borderYCoord;
             else
                 return Math.Sign(ballYVelocity) * leftoverY - borderYCoord;
-
         }
-
 
         /// <summary>
         /// The distance between the predicted ball position, and the paddle position.
@@ -202,9 +234,11 @@ namespace Prong
         /// <returns></returns>
         private float heuristic(Node node)
         {
-            return Math.Abs(node.state.plr1PaddleY - predictedBallY);
+            Vector2 plr1Pos=new Vector2(forwardModel.plr1PaddleBounceX(),node.state.plr1PaddleY);
+            Vector2 ballPos = new Vector2(node.state.ballX,node.state.ballY);
+            //return Math.Abs(node.state.ballY - node.state.plr1PaddleY);
+            return (plr1Pos-ballPos).Length;
         }
-
 
         /// <summary>
         /// Returns the path from the goal node, to the start node.
@@ -242,9 +276,10 @@ namespace Prong
         /// <returns></returns>
         private bool goalTest(Node node)
         {
-            if (predictedBallY - config.paddleHeight() / 4.0f<=node.state.plr1PaddleY && node.state.plr1PaddleY<=predictedBallY+config.paddleHeight()/4.0f)
+            return forwardModel.ballHitsLeftPaddle();
+            /*if (predictedBallY - config.paddleHeight() / 4.0f<=node.state.plr1PaddleY && node.state.plr1PaddleY<=predictedBallY+config.paddleHeight()/4.0f)
                 return true;
-            return false;
+            return false;*/
         }
     }
 }
