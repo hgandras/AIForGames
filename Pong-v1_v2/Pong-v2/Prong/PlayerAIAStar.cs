@@ -212,7 +212,6 @@ namespace Prong
         /// <returns></returns>
         private float heuristic(Node node)
         {
-            //return Math.Abs(node.state.plr1PaddleY - predictedBallY);
             forwardModel.SetState(node.state);
             Vector2 ballPos =new Vector2(node.state.ballX,node.state.ballY);
             Vector2 paddlePos = new Vector2(forwardModel.plr1PaddleBounceX(), node.state.plr1PaddleY);
