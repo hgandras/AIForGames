@@ -17,7 +17,6 @@ namespace Prong
         private const int STATE_ROUND_INTERVAL = 5;
         private const float TimeOut = 0.05f;
         private  float timeDelta = 0.016f;
-        private bool timeOut=false;
         private Node root;
         private float predictedBallY;
         private StaticState config;
@@ -72,13 +71,18 @@ namespace Prong
                 return cond1 && cond2 && cond3 && cond4;
             }
 
+            private static void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+            {
+                Console.WriteLine("The Elapsed event was raised at {0}", e.SignalTime);
+            }
+
             /// <summary>
-            /// Idea is that states only differ by the position of the paddle, so
-            /// that should be encoded.
+            /// Encoding the information about the states.
             /// </summary>
             /// <returns></returns>
             public override int GetHashCode()
             {
+
                 int hash = 13;
                 hash = hash * 23 + applyInterval(state.plr1PaddleY);
                 hash = hash * 23 + applyInterval(state.plr2PaddleY);
@@ -87,6 +91,11 @@ namespace Prong
                 return hash;
             }
 
+            /// <summary>
+            /// Comprator, so the priority queue works with this.
+            /// </summary>
+            /// <param name="other"></param>
+            /// <returns></returns>
             int IComparable<Node>.CompareTo(Node other)
             {
                 if (other.F < F)
@@ -139,12 +148,12 @@ namespace Prong
                 Node current_node = frontier.Dequeue();
                 if (goalTest(current_node))
                     return current_node;
+                PlayerAction otherPlayerAction = otherPlayer.GetAction(config, current_node.state);
                 foreach(PlayerAction action in Enum.GetValues(typeof(PlayerAction)))
                 {
                     Node nextState=current_node.Clone();
                     nextState.parent = current_node;
                     nextState.action = action;
-                    PlayerAction otherPlayerAction = otherPlayer.GetAction(config, nextState.state);
                     TickResult res = forwardModel.Tick(nextState.state, action,otherPlayerAction, timeDelta);
                     nextState.Cost = pathCost(nextState);
                     nextState.Heuristic = heuristic(nextState);
@@ -196,14 +205,12 @@ namespace Prong
                     return -Math.Sign(ballYVelocity) * leftoverY - borderYCoord;
                 else
                     return -Math.Sign(ballYVelocity) * leftoverY + borderYCoord;
-            }
+            }   
             if (ballYVelocity < 0)
                 return Math.Sign(ballYVelocity) * leftoverY + borderYCoord;
             else
                 return Math.Sign(ballYVelocity) * leftoverY - borderYCoord;
-
         }
-
 
         /// <summary>
         /// The distance between the predicted ball position, and the paddle position.
@@ -229,7 +236,6 @@ namespace Prong
                 
             return (ballPos-paddlePos).Length;
         }
-
 
         /// <summary>
         /// Returns the path from the goal node, to the start node.
