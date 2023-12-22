@@ -3,6 +3,7 @@ using OpenTK.Audio.OpenAL;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Diagnostics;
 using System.Linq;
 using System.Timers;
 
@@ -13,12 +14,14 @@ namespace Prong
 {
     internal class PlayerAIAStar : Player
     {
+        private const int STATE_ROUND_INTERVAL = 5;
         private const float TimeOut = 0.05f;
         private  float timeDelta = 0.016f;
         private bool timeOut=false;
         private Node root;
         private float predictedBallY;
         private StaticState config;
+        private Player otherPlayer=new PlayerAIReactive();
         PongEngine forwardModel;
 
         /// <summary>
@@ -38,7 +41,6 @@ namespace Prong
                 } 
             }
 
-
             public Node Clone()
             {
                 Node clonedNode = new Node()
@@ -52,13 +54,22 @@ namespace Prong
                 return clonedNode;
             }
 
+            private int applyInterval(float num)
+            {
+                return (int)Math.Round(num / STATE_ROUND_INTERVAL) * STATE_ROUND_INTERVAL;
+            }
 
             public override bool Equals(object obj)
             {
                 if (!(obj is Node)) return false;
                 Node other = (Node)obj;
 
-                return (int)other.state.plr1PaddleY==(int)state.plr1PaddleY;
+                bool cond1 = applyInterval(other.state.plr1PaddleY) == applyInterval(state.plr1PaddleY);
+                bool cond2 = applyInterval(other.state.plr2PaddleY) == applyInterval(state.plr2PaddleY);
+                bool cond3 = applyInterval(other.state.ballX) == applyInterval(state.ballX);
+                bool cond4 = applyInterval(other.state.ballY) == applyInterval(state.ballY);
+
+                return cond1 && cond2 && cond3 && cond4;
             }
 
             /// <summary>
@@ -69,7 +80,10 @@ namespace Prong
             public override int GetHashCode()
             {
                 int hash = 13;
-                hash = hash * 91 + (int)state.plr1PaddleY;
+                hash = hash * 23 + applyInterval(state.plr1PaddleY);
+                hash = hash * 23 + applyInterval(state.plr2PaddleY);
+                hash = hash * 23 + applyInterval(state.ballX);
+                hash = hash * 23 + applyInterval(state.ballY);
                 return hash;
             }
 
@@ -99,14 +113,10 @@ namespace Prong
             forwardModel.SetState(root.state);
             Node finalNode;
             PlayerAction action;
-            if (forwardModel.ballFlyingRight())
-                return PlayerAction.NONE;
-            else
-            {
-                predictedBallY = getBallPositionOnHit(config, state);
-                finalNode = AStarSearch();
-                action = returnAction(finalNode);
-            }
+            //predictedBallY = getBallPositionOnHit(config, state);
+            finalNode = AStarSearch();
+            action = returnAction(finalNode);
+         
             return action;
         }
 
@@ -119,15 +129,13 @@ namespace Prong
         /// <returns></returns>
         private Node AStarSearch()
         {
-            Timer timer = new Timer();
+            Stopwatch timer = new Stopwatch();
             timer.Start();
             Dictionary<Node,float> visitedCosts=new Dictionary<Node, float>();
             PriorityQueue<Node> frontier = new PriorityQueue<Node>();
             frontier.Enqueue(root);
-            int x = 0;
             while(frontier.Size>0) 
             {
-
                 Node current_node = frontier.Dequeue();
                 if (goalTest(current_node))
                     return current_node;
@@ -136,7 +144,8 @@ namespace Prong
                     Node nextState=current_node.Clone();
                     nextState.parent = current_node;
                     nextState.action = action;
-                    TickResult res = forwardModel.Tick(nextState.state, action, PlayerAction.NONE, timeDelta);
+                    PlayerAction otherPlayerAction = otherPlayer.GetAction(config, nextState.state);
+                    TickResult res = forwardModel.Tick(nextState.state, action,otherPlayerAction, timeDelta);
                     nextState.Cost = pathCost(nextState);
                     nextState.Heuristic = heuristic(nextState);
                     if (visitedCosts.ContainsKey(nextState))
@@ -145,7 +154,8 @@ namespace Prong
                     visitedCosts[nextState]=nextState.F;
                     frontier.Enqueue(nextState);
                 }
-                x++;
+                if(timer.Elapsed.Milliseconds > TimeOut/1000)
+                    return frontier.Dequeue();
             }
             return new Node();
         }
@@ -202,7 +212,23 @@ namespace Prong
         /// <returns></returns>
         private float heuristic(Node node)
         {
-            return Math.Abs(node.state.plr1PaddleY - predictedBallY);
+            //return Math.Abs(node.state.plr1PaddleY - predictedBallY);
+            forwardModel.SetState(node.state);
+            Vector2 ballPos =new Vector2(node.state.ballX,node.state.ballY);
+            Vector2 paddlePos = new Vector2(forwardModel.plr1PaddleBounceX(), node.state.plr1PaddleY);
+
+            float paddleUpperSide = node.state.plr1PaddleY + 3*config.paddleHeight() / 8;
+            float paddleLowerSide = node.state.plr1PaddleY - 3* config.paddleHeight() / 8;
+
+            if (Math.Abs(ballPos.Y-paddlePos.Y)<40) 
+            {
+                if (ballPos.Y < paddleLowerSide || ballPos.Y > paddleUpperSide)
+                    return 0;
+                else
+                    return 100;
+            }
+                
+            return (ballPos-paddlePos).Length;
         }
 
 
@@ -212,7 +238,7 @@ namespace Prong
         /// <returns></returns>
         private PlayerAction returnAction(Node finalNode)
         {
-            if (finalNode == root)
+            if (finalNode.parent==null)
                 return finalNode.action;
             Node firstNodeAfterRoot = finalNode.parent;
             Node prevNode = finalNode;
@@ -231,7 +257,8 @@ namespace Prong
         /// <returns></returns>
         private float pathCost(Node node)
         {
-            return node.parent.Cost+Math.Abs(node.parent.state.plr1PaddleY-node.state.plr1PaddleY);
+            //return node.parent.Cost+Math.Abs(node.parent.state.plr1PaddleY-node.state.plr1PaddleY);
+            return node.parent.Cost += 1;
         }
 
 
@@ -242,9 +269,10 @@ namespace Prong
         /// <returns></returns>
         private bool goalTest(Node node)
         {
-            if (predictedBallY - config.paddleHeight() / 4.0f<=node.state.plr1PaddleY && node.state.plr1PaddleY<=predictedBallY+config.paddleHeight()/4.0f)
-                return true;
-            return false;
+            /*if (predictedBallY - config.paddleHeight() / 4.0f<=node.state.plr1PaddleY && node.state.plr1PaddleY<=predictedBallY+config.paddleHeight()/4.0f)
+                return true;*/
+            forwardModel.SetState(node.state);
+            return forwardModel.ballHitsLeftPaddle();
         }
     }
 }
