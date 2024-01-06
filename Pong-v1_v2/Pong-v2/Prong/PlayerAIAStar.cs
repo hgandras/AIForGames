@@ -14,7 +14,7 @@ namespace Prong
 {
     internal class PlayerAIAStar : Player
     {
-        private const int STATE_ROUND_INTERVAL = 5;
+        private const int STATE_ROUND_INTERVAL = 1;
         private const float TimeOut = 0.05f;
         private  float timeDelta = 0.016f;
         private Node root;
@@ -231,7 +231,7 @@ namespace Prong
                 if (ballPos.Y < paddleLowerSide || ballPos.Y > paddleUpperSide)
                     return 0;
                 else
-                    return 100;
+                    return 40;
             }
                 
             return (ballPos-paddlePos).Length;
