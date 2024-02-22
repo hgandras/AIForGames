@@ -18,7 +18,6 @@ namespace Prong
         private const float TimeOut = 0.05f;
         private  float timeDelta = 0.016f;
         private Node root;
-        private float predictedBallY;
         private StaticState config;
         private Player otherPlayer=new PlayerAIReactive();
         PongEngine forwardModel;
@@ -82,7 +81,6 @@ namespace Prong
             /// <returns></returns>
             public override int GetHashCode()
             {
-
                 int hash = 13;
                 hash = hash * 23 + applyInterval(state.plr1PaddleY);
                 hash = hash * 23 + applyInterval(state.plr2PaddleY);
@@ -122,7 +120,6 @@ namespace Prong
             forwardModel.SetState(root.state);
             Node finalNode;
             PlayerAction action;
-            //predictedBallY = getBallPositionOnHit(config, state);
             finalNode = AStarSearch();
             action = returnAction(finalNode);
          
@@ -154,7 +151,7 @@ namespace Prong
                     Node nextState=current_node.Clone();
                     nextState.parent = current_node;
                     nextState.action = action;
-                    TickResult res = forwardModel.Tick(nextState.state, action,otherPlayerAction, timeDelta);
+                    forwardModel.Tick(nextState.state, action,otherPlayerAction, timeDelta);
                     nextState.Cost = pathCost(nextState);
                     nextState.Heuristic = heuristic(nextState);
                     if (visitedCosts.ContainsKey(nextState))
@@ -220,21 +217,16 @@ namespace Prong
         private float heuristic(Node node)
         {
             forwardModel.SetState(node.state);
-            Vector2 ballPos =new Vector2(node.state.ballX,node.state.ballY);
+            float predictedBallY = getBallPositionOnHit(config,node.state);
             Vector2 paddlePos = new Vector2(forwardModel.plr1PaddleBounceX(), node.state.plr1PaddleY);
 
-            float paddleUpperSide = node.state.plr1PaddleY + 3*config.paddleHeight() / 8;
-            float paddleLowerSide = node.state.plr1PaddleY - 3* config.paddleHeight() / 8;
+            Vector2 paddleUpperPos = paddlePos + new Vector2(0f, config.paddleHeight()/2f);
+            Vector2 paddleLowerPos = paddlePos - new Vector2(0f, config.paddleHeight()/2f);
 
-            if (Math.Abs(ballPos.Y-paddlePos.Y)<40) 
-            {
-                if (ballPos.Y < paddleLowerSide || ballPos.Y > paddleUpperSide)
-                    return 0;
-                else
-                    return 40;
-            }
-                
-            return (ballPos-paddlePos).Length;
+            float dUpper = Math.Abs(predictedBallY-paddleUpperPos.Y);
+            float dLower = Math.Abs(predictedBallY - paddleLowerPos.Y);
+
+            return Math.Min(dLower,dUpper);
         }
 
         /// <summary>

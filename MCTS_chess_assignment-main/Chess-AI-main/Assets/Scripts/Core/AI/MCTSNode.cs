@@ -16,21 +16,25 @@
     public class MCTSNode
     {
         private List<MCTSNode> childrenList;
-        public bool childrenGenerated=false;
+        public bool childrenGenerated;
         private const float C = 1.0f; //Some number, not final
         public MCTSNode Parent { get; set; } //null for root node
-        public int Wins { get; set; } //Wins of the current player that is moving
+        public float Reward { get; set; } //Accumulated rewards
         public int TimesVisited { get; set; } 
         public Board State { get; set; }
         public List<MCTSNode> Children { get { return childrenList; } }
+        public Move Move { get; set; }
+        public float AvgReward { get { return Reward / TimesVisited; } }
 
-        public MCTSNode(MCTSNode parent,Board state)
+        public MCTSNode(MCTSNode parent,Board state, Move move)
         {
             childrenList= new List<MCTSNode>();
             Parent = parent;
-            Wins = 0;
+            Reward = 0;
             TimesVisited = 0;
             State = state;
+            Move = move;
+            childrenGenerated = false;
         }
 
         public void AddChild(MCTSNode child)
@@ -58,15 +62,14 @@
                 if (TimesVisited == 0)
                     return float.PositiveInfinity;
                 float log = Mathf.Log(Parent.TimesVisited) / TimesVisited;
-                return Wins/TimesVisited+C*Mathf.Sqrt(log);
+                return Reward/TimesVisited+C*Mathf.Sqrt(log);
             }
         }
 
         /// <summary>
         /// There are 2 type of leaf nodes:
         /// -Either a node, that has at least one children without playouts
-        /// -A node without children if it is not expanded, however I do not check for this, since in the algorithm the nodes are always expanded 
-        /// before progressing through them.
+        /// -A node without children if it is not expanded.
         /// </summary>
         /// <param name="Node"></param>
         /// <returns></returns>

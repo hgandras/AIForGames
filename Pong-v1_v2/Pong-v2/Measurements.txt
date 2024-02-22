@@ -1,9 +1,9 @@
 Number of A* iterations per second. For this test I advanced the model, and used the reactive agent as player2.
 
-TimeIt[PongEngine] 1000000 iterations in => total: 53.1888361s, avg: 5.31888361E-05s
-TimeIt[PongEngine] in 0.05s we managed to run 2082 iterations
+TimeIt[PongEngine] 1000000 iterations in => total: 838.0926s, avg: 0.0008380926s
+TimeIt[PongEngine] in 0.05s we managed to run 56 iterations
 
 I am not using the dynamic state, but a Node class that I am cloning, and I measured its cloning speed.
 
-TimeIt[DynamicState.Clone] 1000000 iterations in => total: 0.3842121s, avg: 3.842121E-07s
-TimeIt[DynamicState.Clone] in 0.05s we managed to run 193664 iterations
+TimeIt[DynamicState.Clone] 1000000 iterations in => total: 0.4884831s, avg: 4.884831E-07s
+TimeIt[DynamicState.Clone] in 0.05s we managed to run 103674 iterations

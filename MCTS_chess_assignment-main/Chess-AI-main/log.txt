@@ -1,0 +1,5 @@
+1 moves test 1: FAILURE
+1 moves test 2: FAILURE
+1 moves test 3: FAILURE
+1 moves test 4: FAILURE
+1 moves test 5: FAILURE
